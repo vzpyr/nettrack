@@ -8,6 +8,8 @@ services:
       - "${NETTRACK_PORT}:${NETTRACK_PORT}"
     volumes:
       - nettrack_data:/data
+    tmpfs:
+      - /tmp
     user: "1000:1000"
     init: true
     read_only: true
