@@ -1,0 +1,21 @@
+services:
+  nettrack:
+    build: ./source
+    image: nettrack
+    container_name: nettrack
+    env_file: .env
+    ports:
+      - "${NETTRACK_PORT}:${NETTRACK_PORT}"
+    volumes:
+      - nettrack_data:/data
+    user: "1000:1000"
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+volumes:
+  nettrack_data:

@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NetTrack</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="stylesheet" href="/vendor/uPlot.min.css" />
+    <link rel="stylesheet" href="/app.css" />
+    <script src="/vendor/uPlot.iife.min.js"></script>
+  </head>
+  <body>
+    <div class="app-container" id="app">
+      <header class="header">
+        <div class="brand">
+          <div class="brand-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-gauge-icon lucide-gauge"
+            >
+              <path d="m12 14 4-4" />
+              <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+            </svg>
+          </div>
+          <div class="brand-title">NetTrack</div>
+        </div>
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+          <button class="nav-tab" data-tab="analytics">Analytics</button>
+          <button class="nav-tab" data-tab="settings">Settings</button>
+        </nav>
+        <div class="header-actions">
+          <button class="btn primary sm" id="btnOpenRunModal">Run Test</button>
+          <button
+            class="btn icon-only sm"
+            id="btnThemeToggle"
+            title="Toggle theme"
+          >
+            <span id="themeIcon"></span>
+          </button>
+          <button class="btn icon-only sm" id="btnLogout" title="Log out">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-log-out-icon lucide-log-out"
+            >
+              <path d="m16 17 5-5-5-5" />
+              <path d="M21 12H9" />
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="card live-card" id="liveCard">
+        <div class="live-header">
+          <div class="live-status-pill">
+            <span class="status-dot"></span>
+            <span id="liveStage">Testing</span>
+          </div>
+          <div class="live-meta">
+            <span class="font-mono live-server-text" id="liveServer"></span>
+            <button class="btn danger sm" id="btnCancelTest">Cancel</button>
+          </div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar" id="liveProgressBar"></div>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-label">Download</div>
+            <div class="metric-value">
+              <span id="liveDl">0.00</span><span class="metric-unit">Mbps</span>
+            </div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Upload</div>
+            <div class="metric-value">
+              <span id="liveUl">0.00</span><span class="metric-unit">Mbps</span>
+            </div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Ping</div>
+            <div class="metric-value">
+              <span id="livePing">0.0</span><span class="metric-unit">ms</span>
+            </div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Jitter</div>
+            <div class="metric-value">
+              <span id="liveJitter">0.0</span
+              ><span class="metric-unit">ms</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main>
+        <div class="tab-pane active" id="tabDashboard">
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Provider</th>
+                  <th>Server</th>
+                  <th>Download</th>
+                  <th>Upload</th>
+                  <th>Ping</th>
+                  <th>Jitter</th>
+                  <th>Duration</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody"></tbody>
+            </table>
+            <div class="empty-state" id="historyEmpty" style="display: none">
+              <div class="empty-title">No speedtests recorded</div>
+              <div>
+                Run a speedtest or configure cron schedules in Settings.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="tabAnalytics">
+          <div class="analytics-filter-row">
+            <div class="analytics-dropdowns">
+              <select class="select sm" id="analyticsProviderFilter">
+                <option value="all">All Providers</option>
+              </select>
+              <select class="select sm" id="analyticsServerFilter">
+                <option value="all">All Servers</option>
+              </select>
+            </div>
+            <div class="range-picker">
+              <button class="range-btn" data-range="24h">24h</button>
+              <button class="range-btn active" data-range="7d">7d</button>
+              <button class="range-btn" data-range="30d">30d</button>
+              <button class="range-btn" data-range="all">All</button>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <div class="metric-label">Download</div>
+              <div class="metric-value">
+                <span id="statAvgDl">-</span
+                ><span class="metric-unit">Mbps avg</span>
+              </div>
+              <div class="metric-sub">
+                <span>Peak: <strong id="statPeakDl">-</strong></span>
+                <span>p90: <strong id="statP90Dl">-</strong></span>
+                <span>Min: <strong id="statMinDl">-</strong></span>
+              </div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Upload</div>
+              <div class="metric-value">
+                <span id="statAvgUl">-</span
+                ><span class="metric-unit">Mbps avg</span>
+              </div>
+              <div class="metric-sub">
+                <span>Peak: <strong id="statPeakUl">-</strong></span>
+                <span>p90: <strong id="statP90Ul">-</strong></span>
+                <span>Min: <strong id="statMinUl">-</strong></span>
+              </div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Latency & Jitter</div>
+              <div class="metric-value">
+                <span id="statAvgPing">-</span
+                ><span class="metric-unit">ms avg</span>
+              </div>
+              <div class="metric-sub">
+                <span>Min: <strong id="statMinPing">-</strong></span>
+                <span>p90: <strong id="statP90Ping">-</strong></span>
+                <span>Jitter: <strong id="statAvgJitter">-</strong></span>
+              </div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Reliability & Volume</div>
+              <div class="metric-value">
+                <span id="statSuccessRate">-</span
+                ><span class="metric-unit">% success</span>
+              </div>
+              <div class="metric-sub">
+                <span>Total: <strong id="statTotalTests">-</strong></span>
+                <span>Failed: <strong id="statFailedTests">-</strong></span>
+                <span>Data: <strong id="statTotalData">-</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Bandwidth (Mbps)</div>
+            </div>
+            <div class="chart-container">
+              <div id="bandwidthChart" class="uplot-target"></div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Latency & Jitter (ms)</div>
+            </div>
+            <div class="chart-container">
+              <div id="latencyChart" class="uplot-target"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="tabSettings">
+          <div class="card">
+            <div class="section-title">Automation & Schedules</div>
+
+            <div class="form-group">
+              <label class="switch-label">
+                <input
+                  type="checkbox"
+                  class="switch-input"
+                  id="settingCronEnabled"
+                />
+                <span class="switch-track"
+                  ><span class="switch-thumb"></span
+                ></span>
+                <span class="form-label" style="margin: 0"
+                  >Enable scheduled tests</span
+                >
+              </label>
+              <span class="form-desc"
+                >Periodically execute background speedtests on a cron
+                schedule</span
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Schedule Preset</label>
+              <select class="select" id="settingCronPreset">
+                <option value="0 * * * *">Every hour</option>
+                <option value="0 */3 * * *">Every 3 hours</option>
+                <option value="0 */6 * * *" selected>Every 6 hours</option>
+                <option value="0 */12 * * *">Every 12 hours</option>
+                <option value="0 0 * * *">Once daily at midnight</option>
+                <option value="custom">Custom cron expression</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="groupCustomCron" style="display: none">
+              <label class="form-label">Cron Expression</label>
+              <input
+                type="text"
+                class="input font-mono"
+                id="settingCronExpr"
+                value="0 */6 * * *"
+              />
+              <span class="form-desc"
+                >Standard 5-part cron syntax (minute hour day-of-month month
+                day-of-week)</span
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Speedtest Provider</label>
+              <select class="select" id="settingProvider">
+                <option value="cloudflare">Cloudflare Speed</option>
+                <option value="librespeed">LibreSpeed</option>
+                <option value="ookla">Ookla Speedtest</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Server</label>
+              <select class="select" id="settingServer">
+                <option value="auto">Auto / Default Edge</option>
+              </select>
+              <span class="form-desc"
+                >Dynamically populated from selected provider</span
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Data Retention</label>
+              <select class="select" id="settingRetention">
+                <option value="0">Keep all history indefinitely</option>
+                <option value="7">Auto-prune older than 7 days</option>
+                <option value="30">Auto-prune older than 30 days</option>
+                <option value="90">Auto-prune older than 90 days</option>
+                <option value="180">Auto-prune older than 180 days</option>
+                <option value="365">Auto-prune older than 1 year</option>
+              </select>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn primary" id="btnSaveSettings">
+                Save Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="runModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">Run Speedtest</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Provider</label>
+          <select class="select" id="modalProvider">
+            <option value="cloudflare">Cloudflare Speed</option>
+            <option value="librespeed">LibreSpeed</option>
+            <option value="ookla">Ookla Speedtest</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Server</label>
+          <select class="select" id="modalServer">
+            <option value="auto">Auto / Nearest Server</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" id="btnCancelRunModal">Cancel</button>
+          <button class="btn primary" id="btnStartSpeedtest">Start Test</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="authModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="brand">
+            <div class="brand-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-gauge-icon lucide-gauge"
+              >
+                <path d="m12 14 4-4" />
+                <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+              </svg>
+            </div>
+            <div class="modal-title">NetTrack</div>
+          </div>
+        </div>
+        <form id="authForm" class="auth-form">
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input
+              type="password"
+              class="input"
+              id="authPassword"
+              placeholder="Enter password"
+              required
+              autofocus
+            />
+            <div
+              id="authError"
+              class="auth-error-msg"
+              style="display: none"
+            ></div>
+          </div>
+          <button type="submit" class="btn primary" id="btnSubmitAuth">
+            Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
